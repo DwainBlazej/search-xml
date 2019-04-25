@@ -1,0 +1,179 @@
+#!/usr/bin/env ruby
+# -*- encoding: utf-8 -*-
+# 
+# search-xml: search XML, allow search exclusions.
+#
+# Copyright (C) 2018-2019 Dwain Blazej <Dwain.Blazej@gmail.com>
+#
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+require 'optparse' # ri OptionParser
+require 'ostruct' # ri OpenStruct
+require 'pathname'
+require 'find'
+require 'csv'
+
+require 'nokogiri'
+
+$PUBLISHED_PROGRAME_NAME='search-xml'
+$VERSION='1.1.4'
+class Main
+  def initialize
+    begin
+      ARGV << "--help" if ARGV.empty?
+      $options = Options.parse(ARGV)
+    rescue OptionParser::ParseError, ArgumentError=> e
+      STDERR.puts(e.message, "\n", $options)
+      exit(-1)
+    end
+
+    CSV.open($options.csv_output_file_name, 'w', headers: true) do |csv_object|
+      csv_object << ['File', 'XML Node Contents']
+      begin 
+        Find.find($options.directory_search_root) do |path|
+          next if not FileTest.file?(path)
+          next if not /.*(\.xml)|(\.ditamap)/i =~ path
+          STDERR.puts("Searching #{path}") if $options.progress
+          xmldoc = Nokogiri.XML(File.open(path))
+          xmldoc.traverse do |node|
+            search = node.to_s
+            $options.search_exclusions.each do |exclusion_prefix|
+              # Remove the undesired text string for the line being examined.
+              search.gsub!(/#{Regexp.escape(exclusion_prefix)}\s+#{Regexp.escape($options.search_string)}/i,"")
+            end
+            # See if the line being examined still contains the sought for text.
+            if search.downcase.include?($options.search_string.downcase)
+              if $options.show_relative_path
+                show_path = Pathname.new(path).relative_path_from(Pathname.new(Dir.pwd))
+              else
+                show_path = path
+              end
+              puts "#{show_path}#{$options.column_separator}#{node.to_s}" if $options.verbose
+              csv_object << [show_path, node.to_s]
+
+              # Prevent this node from being reported multiple times.
+              node.remove
+            end
+          end
+        end
+      rescue ArgumentError => e
+        puts "Error: #{e}"
+      end
+    end
+    
+  end
+
+  class Options
+    def self.parse(args)
+      options = OpenStruct.new(progress: false, verbose: true, show_relative_path: true, csv_output_file_name: "#{$PUBLISHED_PROGRAME_NAME}.csv", directory_search_root: search_path = Dir.pwd, column_separator: "   |   ")
+      parser=OptionParser.new do |opts|
+        opts.banner = <<-EOS
+Synopsis:
+    #{$PUBLISHED_PROGRAME_NAME} [options] <search-text> <prefix-exclusion-text> [<prefix-exclusion-text>...]
+
+Options:
+        EOS
+        
+        opts.on("--column-separator=UNIQUE", String, "Character or string of characters used to separate column in the output.  Default:  #{options.column_separator}") do |column_separator|
+          options.column_separator = column_separator
+        end
+
+        opts.on("-o", "--csv-output=FILE", String, "The file to output results, in CSV format, into.  Default:  #{options.csv_output_file_name}") do |csv_output|
+          options.csv_output_file_name = csv_output
+        end
+
+
+        opts.on("-d", "--directory=DIRECTORY", String, "The directory to start the search in.  Defaults to the directory this command is run in, currently:  #{options.directory_search_root}") do |directory|
+          if not FileTest.directory?(directory) then
+            raise(ArgumentError, "Not a directory: #{directory}")
+          end
+          if not FileTest.readable?(directory) then
+            raise(ArgumentError, "Need read permission for directory: #{directory}")
+          end
+          options.directory_search_root = directory
+        end
+
+        opts.on("--no-show-relative-path", "Report the file names using their full path.  Default to showing paths relative to the current directory: #{options.show_relative_path}") do |show_relative_path|
+          options.show_relative_path = show_relative_path
+        end
+
+        opts.on("-p", "--progress", 'Show the name of the file currently being searched.') do |progress|
+          options.progress = progress
+        end
+
+        opts.separator ""
+        opts.separator "Common options:"
+        opts.on("-q", "--verbose", "Show results as they are found.") do |verbose|
+          options.verbose = verbose
+        end
+
+        opts.on("--version", "Show version message.") do
+          puts ("#{$PUBLISHED_PROGRAME_NAME} version #{$VERSION}")
+          exit
+        end
+
+        opts.on("-h", "--help", "Show this message") do
+          puts opts
+          exit
+        end
+        opts.separator ""
+        opts.separator <<-EOS
+
+Description:
+    Search .xml and .ditamap files for the word <search-text>.  During the search, exclude from the results instances where <search-text> is immediately preceded by any <prefix-exclusion-text>.  Store the search results in a CSV file named #{options.csv_output_file_name}
+
+Examples:
+    This will report XLM elements containing "workbench", except if the word before "workbench" is "translation":
+        #{$PUBLISHED_PROGRAME_NAME} workbench translation
+
+    This will report XLM elements containing "workbench", except if the word before "workbench" is either "translation" or "wood":
+        #{$PUBLISHED_PROGRAME_NAME} workbench translation wood
+
+Bugs:
+    No known bugs.
+
+About:
+    #{$PUBLISHED_PROGRAME_NAME} version #{$VERSION}, Copyright (C) 2018-2019 Dwain Blazej <Dwain.Blazej@gmail.com>
+
+    This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it
+    under certain conditions. See the GNU General Public License version 3 for details https://www.gnu.org/licenses/
+
+History:
+    2019-04-25 version 1.1.4 by Dwain Blazej <Dwain.Blazej@gmail.com> Improve "help" text.  Publish at https://github.com/DwainBlazej/search-xml
+    2019-02-26 version 1.1.3 by Dwain Blazej <Dwain.Blazej@gmail.com> Make search and exclusions case insensitive.
+    2018-07-26 version 1.0.0 by Dwain Blazej <Dwain.Blazej@gmail.com> Initial version.
+		EOS
+      end
+      parser.parse!(args)
+
+      if ARGV.empty?
+        raise(ArgumentError, "Error: No search string specified.")
+      else
+        options.search_string=ARGV.shift
+        
+      end
+      if ARGV.empty?
+        raise(ArgumentError, "Error: No exclusion string specified.")
+      else
+        options.search_exclusions=ARGV
+        
+      end
+
+      return(options)
+    end  # method parse()
+  end  # class Options
+end
+
+Main.new

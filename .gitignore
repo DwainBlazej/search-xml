@@ -1,0 +1,18 @@
+.DS_Store
+TAGS
+.thumbnails
+*.a
+*.o
+*.so
+*.sw[nop]
+
+# Emacs editor temporary and lock files.
+*~
+.~*
+.#*
+[#]*#
+
+# SSHFS ( https://github.com/libfuse/sshfs ) lock files.
+.fuse_hidden*
+
+testing
