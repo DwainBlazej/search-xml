@@ -15,4 +15,5 @@ TAGS
 # SSHFS ( https://github.com/libfuse/sshfs ) lock files.
 .fuse_hidden*
 
+search-xml.csv
 testing
