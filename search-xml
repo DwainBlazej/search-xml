@@ -139,11 +139,14 @@ Description:
     Search .xml and .ditamap files for the word <search-text>.  During the search, exclude from the results instances where <search-text> is immediately preceded by any <prefix-exclusion-text>.  Store the search results in a CSV file named #{options.csv_output_file_name}
 
 Examples:
-    This will report XLM elements containing "workbench", except if the word before "workbench" is "translation":
+    To report XLM elements containing "workbench", except if the word before "workbench" is "translation":
         ruby #{$PUBLISHED_PROGRAME_NAME} workbench translation
 
-    This will report XLM elements containing "workbench", except if the word before "workbench" is either "translation" or "wood":
+    To report XLM elements containing "workbench", except if the word before "workbench" is either "translation" or "wood":
         ruby #{$PUBLISHED_PROGRAME_NAME} workbench translation wood
+
+    To report XML elements containing "workbench" without restricting what it's preceded by (in a directory that you're pretty sure doesn't contain any occurences of "zzzzzzzzzzzzzzzzzzzzzzzzz workbench"):  
+        ruby #{$PUBLISHED_PROGRAME_NAME} workbench zzzzzzzzzzzzzzzzzzzzzzzzz
 
 Bugs:
     No known bugs.
