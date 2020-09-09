@@ -17,10 +17,10 @@ Search `.xml` and `.ditamap` files for the word &lt;search-text>.  During the se
 `-h, --help`: Show this message.  
 
 ## Examples:
-To report XLM elements containing "workbench", except if the word before "workbench" is "translation":  
+To report XML elements containing "workbench", except if the word before "workbench" is "translation":  
 `ruby search-xml workbench translation`
 
-To report XLM elements containing "workbench", except if the word before "workbench" is either "translation" or "wood":  
+To report XML elements containing "workbench", except if the word before "workbench" is either "translation" or "wood":  
 `ruby search-xml workbench translation wood`
 
 To report XML elements containing "workbench" without restricting what it's preceded by (in a directory that you're pretty sure doesn't contain any occurences of `zzzzzzzzzzzzzzzzzzzzzzzzz workbench`):  
