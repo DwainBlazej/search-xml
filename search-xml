@@ -90,16 +90,16 @@ Synopsis:
 Options:
         EOS
         
-        opts.on("--column-separator=UNIQUE", String, "Character or string of characters used to separate column in the output.  Default:  #{options.column_separator}") do |column_separator|
+        opts.on("--column-separator=UNIQUE", String, "Character or string of characters used to separate columns in the output. Default: #{options.column_separator}") do |column_separator|
           options.column_separator = column_separator
         end
 
-        opts.on("-o", "--csv-output=FILE", String, "The file to output results, in CSV format, into.  Default:  #{options.csv_output_file_name}") do |csv_output|
+        opts.on("-o", "--csv-output=FILE", String, "The file to output results, in CSV format, into. Default: #{options.csv_output_file_name}") do |csv_output|
           options.csv_output_file_name = csv_output
         end
 
 
-        opts.on("-d", "--directory=DIRECTORY", String, "The directory to start the search in.  Defaults to the directory this command is run in, currently:  #{options.directory_search_root}") do |directory|
+        opts.on("-d", "--directory=DIRECTORY", String, "The directory to start the search in. Defaults to the directory this command is run in, currently: #{options.directory_search_root}") do |directory|
           if not FileTest.directory?(directory) then
             raise(ArgumentError, "Not a directory: #{directory}")
           end
@@ -109,7 +109,7 @@ Options:
           options.directory_search_root = directory
         end
 
-        opts.on("--no-show-relative-path", "Report the file names using their full path.  Default to showing paths relative to the current directory: #{options.show_relative_path}") do |show_relative_path|
+        opts.on("--no-show-relative-path", "Report the file names using their full path. Defaults to showing paths relative to the current directory: #{options.show_relative_path}") do |show_relative_path|
           options.show_relative_path = show_relative_path
         end
 
@@ -139,11 +139,14 @@ Description:
     Search .xml and .ditamap files for the word <search-text>.  During the search, exclude from the results instances where <search-text> is immediately preceded by any <prefix-exclusion-text>.  Store the search results in a CSV file named #{options.csv_output_file_name}
 
 Examples:
-    This will report XLM elements containing "workbench", except if the word before "workbench" is "translation":
-        #{$PUBLISHED_PROGRAME_NAME} workbench translation
+    To report XML elements containing "workbench", except if the word before "workbench" is "translation":
+        ruby #{$PUBLISHED_PROGRAME_NAME} workbench translation
 
-    This will report XLM elements containing "workbench", except if the word before "workbench" is either "translation" or "wood":
-        #{$PUBLISHED_PROGRAME_NAME} workbench translation wood
+    To report XML elements containing "workbench", except if the word before "workbench" is either "translation" or "wood":
+        ruby #{$PUBLISHED_PROGRAME_NAME} workbench translation wood
+
+    To report XML elements containing "workbench" without restricting what it's preceded by (in a directory that you're pretty sure doesn't contain any occurences of "zzzzzzzzzzzzzzzzzzzzzzzzz workbench"):  
+        ruby #{$PUBLISHED_PROGRAME_NAME} workbench zzzzzzzzzzzzzzzzzzzzzzzzz
 
 Bugs:
     No known bugs.
